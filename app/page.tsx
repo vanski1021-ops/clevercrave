@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import HomeHeader from "@/components/home/HomeHeader";
 import HeroGenerateCard from "@/components/home/HeroGenerateCard";
 import HomeFilters from "@/components/home/HomeFilters";
@@ -45,6 +46,40 @@ const MOCK_RECIPES: Recipe[] = [
 /* ---------------- Page ---------------- */
 
 export default function HomePage() {
+  // State for dynamic recipes (fallback to mock)
+  const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES);
+
+  useEffect(() => {
+    // Load generated recipes from localStorage
+    const loadRecipes = () => {
+      const stored = localStorage.getItem('generatedRecipes');
+      if (stored) {
+        try {
+          const generated = JSON.parse(stored);
+          if (generated.length > 0) {
+            setRecipes(generated);
+          }
+        } catch (err) {
+          console.error('Failed to load recipes:', err);
+        }
+      }
+    };
+    
+    // Load on mount
+    loadRecipes();
+    
+    // Listen for new generations
+    const handleNewRecipes = () => {
+      loadRecipes();
+    };
+    
+    window.addEventListener('recipesGenerated', handleNewRecipes);
+    
+    return () => {
+      window.removeEventListener('recipesGenerated', handleNewRecipes);
+    };
+  }, []);
+
   return (
     <div className="bg-[#FFF7ED] min-h-full">
       {/* Header */}
@@ -61,9 +96,9 @@ export default function HomePage() {
 
       {/* Recipe Carousel */}
       <div className="flex gap-5 px-5 pb-10 overflow-x-auto no-scrollbar snap-x">
-        {MOCK_RECIPES.map((recipe, idx) => (
+        {recipes.map((recipe, idx) => (
           <RecipeCard
-            key={idx}
+            key={recipe.id || idx}
             recipe={recipe}
             onCook={() => {}}
             onAddMissing={() => {}}
