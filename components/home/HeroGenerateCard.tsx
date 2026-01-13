@@ -24,7 +24,7 @@ export default function HeroGenerateCard() {
   const handleGenerate = async () => {
     // Check if pantry has items
     if (pantryItems.length === 0) {
-      alert('Add items to your pantry first!')
+      alert('Add items first!')
       router.push('/scan')
       return
     }
@@ -37,6 +37,7 @@ export default function HeroGenerateCard() {
     
     // Show loading state
     setIsGenerating(true)
+    window.dispatchEvent(new Event('recipesGenerating'))
     
     try {
       // Get pantry item names
@@ -70,6 +71,7 @@ export default function HeroGenerateCard() {
       
       // Trigger re-render of home page
       window.dispatchEvent(new Event('recipesGenerated'))
+      window.dispatchEvent(new Event('recipesGeneratedComplete'))
       
       setIsGenerating(false)
       
@@ -81,6 +83,7 @@ export default function HeroGenerateCard() {
     } catch (error) {
       console.error('Generation error:', error)
       setIsGenerating(false)
+      window.dispatchEvent(new Event('recipesGeneratedComplete'))
       alert('Failed to generate recipes. Please try again.')
       
       // Refund credit on error
@@ -90,38 +93,30 @@ export default function HeroGenerateCard() {
 
   return (
     <>
-      <button 
-        onClick={handleGenerate}
-        disabled={isGenerating || pantryItems.length === 0}
-        className="w-full bg-gradient-to-br from-red-500 via-orange-500 to-orange-400 text-white rounded-[32px] p-7 shadow-xl shadow-orange-200 active:scale-[0.98] transition-all flex items-center justify-between group relative overflow-hidden disabled:opacity-75 disabled:cursor-not-allowed"
-      >
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-        
-        {/* Credit cost badge */}
-        <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-full">
-          🪙 {CREDIT_COSTS.GENERATE}
-        </div>
-        
-        <div className="flex flex-col items-start relative z-10">
-          <span className="font-heading font-bold text-2xl mb-1">
-            {isGenerating ? '🤔 Thinking...' : '✨ Generate Dinner Ideas'}
-          </span>
-          <span className="text-orange-50 font-medium text-sm">
-            {isGenerating 
-              ? 'Creating your menu' 
-              : pantryItems.length === 0 
-                ? 'Add pantry items first'
-                : `Tap to remix ${pantryItems.length} ingredients`
-            }
-          </span>
-        </div>
-        
-        <div className="bg-white/20 p-3 rounded-full relative z-10 group-hover:rotate-12 transition-transform">
-          <span className="text-3xl">
-            {isGenerating ? '⏳' : '🔥'}
-          </span>
-        </div>
-      </button>
+      <div className="px-5 mb-6">
+        <button 
+          onClick={handleGenerate}
+          disabled={isGenerating || pantryItems.length === 0}
+          className="w-full bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-3xl p-8 shadow-2xl active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">✨</span>
+              <span className="text-2xl font-black">
+                {isGenerating ? 'Generating...' : 'Generate Dinner Ideas'}
+              </span>
+            </div>
+            <p className="text-white/80 text-sm font-medium">
+              {isGenerating 
+                ? 'Creating your personalized menu'
+                : pantryItems.length === 0 
+                  ? 'Add items first'
+                  : `Tap to remix ${pantryItems.length} ingredients`
+              }
+            </p>
+          </div>
+        </button>
+      </div>
 
       <OutOfCreditsModal 
         isOpen={showCreditsModal}

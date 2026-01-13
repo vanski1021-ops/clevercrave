@@ -1,3 +1,8 @@
+/**
+ * Tailwind CSS directives
+ * These are processed by PostCSS and Tailwind during build
+ * @see https://tailwindcss.com/docs/functions-and-directives
+ */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,4 +37,18 @@ body {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+}
+
+@keyframes gradient {
+  0%, 100% { 
+    background-position: 0% 50%; 
+  }
+  50% { 
+    background-position: 100% 50%; 
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 8s ease infinite;
 }
