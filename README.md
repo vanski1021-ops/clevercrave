@@ -13,7 +13,7 @@ This is not a toy prototype. We're building toward an **almost-finished product*
 ## Core Product Loop (North Star)
 
 1. **Snap** fridge/pantry groceries (vision)
-2. **Confirm** detected items (fast edit/merge/rename, no friction)
+2. **Confirm** detected items (review, location, delete)
 3. **Generate** 3 ultra-short recipes (clear, confidence-building, low cognitive load)
 4. **Grocery list** for missing items (one-tap add)
 5. **Share** recipe/cards to drive viral growth
@@ -33,8 +33,9 @@ This is not a toy prototype. We're building toward an **almost-finished product*
 - ✅ Real-time waste saved tracking
 
 **🚧 In Progress:**
-- Profile & Settings page
+- Settings & preferences (Profile UI is complete; features are placeholders)
 - Real AI integration (Gemini Vision + GPT-4o-mini)
+- Home page locked (UI/UX frozen for polish)
 
 ---
 
@@ -369,5 +370,5 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 
 ---
 
-**Last Updated:** January 8, 2026  
+**Last Updated:** January 15, 2026  
 **Version:** 0.3.0 (Phases 1-4 Complete)

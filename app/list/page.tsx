@@ -15,6 +15,17 @@ export default function ListPage() {
   const [newItem, setNewItem] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const MAX_ITEM_LENGTH = 40;
+
+  const [showTip, setShowTip] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !localStorage.getItem("list-tip-dismissed");
+  });
+
+  const handleDismissTip = () => {
+    setShowTip(false);
+    localStorage.setItem("list-tip-dismissed", "true");
+  };
 
   // Long press timer ref
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -31,7 +42,7 @@ export default function ListPage() {
 
   // Handle add item
   const handleAddItem = () => {
-    const trimmed = newItem.trim();
+    const trimmed = newItem.trim().slice(0, MAX_ITEM_LENGTH);
     if (trimmed) {
       addItem(trimmed);
       setNewItem("");
@@ -135,6 +146,20 @@ export default function ListPage() {
         )}
       </p>
 
+      {showTip && items.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm border border-orange-100 rounded-2xl p-3 mb-4 flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            💡 Tap to check off • Hold to delete
+          </p>
+          <button
+            onClick={handleDismissTip}
+            className="ml-3 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Add Item Input */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 mb-6 flex gap-2">
         <input
@@ -142,7 +167,8 @@ export default function ListPage() {
           type="text"
           placeholder="Add item..."
           value={newItem}
-          onChange={(e) => setNewItem(e.target.value)}
+          maxLength={MAX_ITEM_LENGTH}
+          onChange={(e) => setNewItem(e.target.value.slice(0, MAX_ITEM_LENGTH))}
           onKeyDown={handleKeyDown}
           className="flex-1 outline-none text-lg px-2 bg-white text-gray-900 font-bold placeholder:text-gray-400 placeholder:font-normal"
         />
@@ -240,22 +266,6 @@ export default function ListPage() {
                   {item.name}
                 </span>
 
-                {/* Delete hint (visual only, long press triggers) */}
-                <div className="w-10 h-10 flex items-center justify-center text-gray-300">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </div>
               </div>
             ))}
           </div>

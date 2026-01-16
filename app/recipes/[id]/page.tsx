@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, Share2, Heart, Clock, Users, ChefHat } from "lucide-react";
 import { useListStore } from "@/stores/listStore";
 import { useUserStore } from "@/stores/userStore";
@@ -16,30 +16,34 @@ export default function RecipeDetailPage() {
   const favoriteRecipes = useUserStore((state) => state.favoriteRecipes);
   const favorited = favoriteRecipes.includes(recipeId);
 
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
+  const recipe = useMemo<Recipe | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const recipes: Recipe[] = JSON.parse(
+        localStorage.getItem("generatedRecipes") || "[]"
+      );
+      return recipes.find((r) => r.id === recipeId) ?? null;
+    } catch (error) {
+      console.warn("Failed to load recipe:", error);
+      return null;
+    }
+  }, [recipeId]);
+
+  const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>(() => {
+    if (!recipe) return {};
+    const initialChecked: Record<string, boolean> = {};
+    recipe.ingredientsUsed.forEach((ing: string) => {
+      initialChecked[ing] = true;
+    });
+    return initialChecked;
+  });
   const [justFavorited, setJustFavorited] = useState(false);
 
   useEffect(() => {
-    // Load recipes from localStorage and find by unique ID
-    const recipes = JSON.parse(localStorage.getItem("generatedRecipes") || "[]");
-    
-    // Find recipe by unique ID
-    const found = recipes.find((r: Recipe) => r.id === recipeId);
-
-    if (found) {
-      setRecipe(found);
-      // Initialize checked state based on what's in pantry (ingredientsUsed)
-      const initialChecked: Record<string, boolean> = {};
-      found.ingredientsUsed.forEach((ing: string) => {
-        initialChecked[ing] = true;
-      });
-      setCheckedIngredients(initialChecked);
-    } else {
-      // Redirect if not found
-      router.push('/');
+    if (!recipe) {
+      router.push("/");
     }
-  }, [recipeId, router]);
+  }, [recipe, router]);
 
   const handleShare = async () => {
     if (!recipe) return;
@@ -51,8 +55,8 @@ export default function RecipeDetailPage() {
           text: `Check out this recipe: ${recipe.title}`,
           url: window.location.href,
         });
-      } catch (err) {
-        console.log("Share cancelled");
+      } catch (error) {
+        console.log("Share cancelled", error);
       }
     } else {
       await navigator.clipboard.writeText(window.location.href);

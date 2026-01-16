@@ -19,6 +19,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, cardIndex, onCook, onAd
   const [isExpanded, setIsExpanded] = useState(false);
   
   const primaryTag = recipe.tags[0] || 'Tasty';
+  const tagLabel = cardIndex === 0 ? "Fast" : cardIndex === 1 ? "Comfort" : primaryTag;
   const usedIng = recipe.ingredientsUsed.length;
   const totalIng = recipe.ingredientsUsed.length + recipe.missingIngredients.length;
   const missingCount = recipe.missingIngredients.length;
@@ -37,15 +38,14 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, cardIndex, onCook, onAd
       // Card 1: Show pantry match
       return (
         <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1.5">
-          {usedIng}/{totalIng} IN PANTRY
+          {usedIng}/{totalIng} IN KITCHEN
         </span>
       );
     } else if (cardIndex === 1) {
-      // Card 2: Need items
-      const needCount = missingCount > 0 ? missingCount : 1;
+      // Card 2: Ready to cook
       return (
         <span className="bg-amber-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-          NEED {needCount}-{needCount + 1} ITEMS
+          READY TO COOK
         </span>
       );
     } else if (cardIndex === 2) {
@@ -120,8 +120,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, cardIndex, onCook, onAd
             {recipe.totalTime}
           </div>
           <div className="flex items-center gap-1.5">
-            <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase ${getTagStyle(primaryTag)}`}>
-              {primaryTag}
+            <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase ${getTagStyle(tagLabel)}`}>
+              {tagLabel}
             </span>
           </div>
         </div>

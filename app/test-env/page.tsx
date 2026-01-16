@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function TestEnvPage() {
     const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
     
@@ -41,9 +43,9 @@ export default function TestEnvPage() {
             </div>
           </div>
           
-          <a href="/" className="text-orange-500 underline mt-6 inline-block">
+          <Link href="/" className="text-orange-500 underline mt-6 inline-block">
             ← Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     )

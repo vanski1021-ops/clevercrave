@@ -39,6 +39,58 @@ body {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes chefGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(251, 146, 60, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(251, 146, 60, 0.65);
+  }
+}
+
+.chef-glow {
+  animation: chefGlow 1.8s ease-in-out infinite;
+}
+
+@keyframes hatFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.chef-hat {
+  display: inline-block;
+  animation: hatFloat 1.8s ease-in-out infinite;
+}
+
 @keyframes gradient {
   0%, 100% { 
     background-position: 0% 50%; 

@@ -1,77 +1,25 @@
 # CleverCrave Development Guide
 
-**Version:** 0.6.0 (Phases 1-6 Complete)  
-**Last Updated:** January 8, 2026  
-**Status:** AI Integration Complete - Production Ready
+**Version:** 0.3.0 (Phases 1-4 Complete)  
+**Last Updated:** January 15, 2026  
+**Status:** Active Development
 
 ---
 
 ## Latest Changes
 
-### January 8, 2026 (PM) - AI Integration & Premium UX
+### January 15, 2026 - Type Safety & Docs Refresh
 
-**🤖 AI-Powered Recipe Generation:**
-- ✅ **OpenAI Integration Complete**
-  - GPT-4o-mini for recipe generation with culinary guardrails
-  - DALL-E-3 for Chef's Pick (Card 3) image generation
-  - Unsplash fallback for Cards 1 & 2 (cost optimization)
-  - Total cost per generation: ~$0.04075
+- ✅ Added explicit typing for recipes loaded from localStorage
+- ✅ Updated README/DEV_GUIDE to reflect current scan overlay + review behavior
 
-- ✅ **Culinary Quality Guardrails**
-  - Added forbidden combinations check (e.g., peanut butter + seafood)
-  - Recipe validation: Card 1 must have 0 missing ingredients
-  - Automatic retry logic with fallback recipes
-  - Enhanced prompts for realistic, appetizing recipes
+### January 15, 2026 - Home Page Lock
 
-- ✅ **Premium Recipe Card Design**
-  - Card 1 & 2: Animated gradient backgrounds (`PremiumGradient.tsx`)
-  - Card 3: Featured with AI-generated DALL-E image
-  - Featured layout: Card 3 displayed first & largest
-  - Responsive grid for Cards 1 & 2 (side-by-side)
+- ✅ Home page layout and copy locked for polish
+- ✅ Time-aware heading + CTA copy
+- ✅ Premium loading skeletons with rotating thinking copy
 
-**💰 Dual Credit System:**
-- ✅ **Free Tier + Monthly Credits**
-  - Free users: 25 scan credits
-  - Premium users: 10 monthly AI generation credits
-  - Automatic monthly reset tracking
-  - Priority deduction: Free → Monthly
-  - Clean pill badge display (no redundant text)
-
-- ✅ **OutOfCreditsModal**
-  - Different UI for free vs premium users
-  - Upgrade prompt for free users ($4.99/month)
-  - Buy more credits option for premium users
-  - Days until reset countdown
-
-**🎨 UX Polish:**
-- ✅ **Generate Button Redesign**
-  - Removed credit cost badge (cleaner, more premium)
-  - Centered layout with sparkles emoji ✨
-  - Generous padding and smooth interactions
-  - Product-quality confidence
-
-- ✅ **Empty State Improvements**
-  - Home: FAB directive (removed competing CTA button)
-  - Orange callout: "Tap the + button below to get started"
-  - Teaches primary interaction pattern
-  - Single path principle
-
-- ✅ **Scan Flow Fixes**
-  - Created proper `/scan` entry page (Manual & Camera options)
-  - Fixed infinite redirect loop
-  - Removed barcode button (non-functional)
-  - Clean 2-option overlay (Camera + Manual)
-
-**Technical:**
-- ✅ Recipe generation API route (`/api/generate-recipes`)
-- ✅ Unique timestamp-based recipe IDs (prevents auto-favoriting bug)
-- ✅ PremiumGradient component with animated backgrounds
-- ✅ Enhanced OpenAI prompts with culinary standards
-- ✅ All linting errors resolved
-
----
-
-### January 8, 2026 (AM) - UI Polish & Icon Upgrade
+### January 8, 2026 - UI Polish & Icon Upgrade
 
 **Navigation Improvements:**
 - ✅ Upgraded bottom navigation to use Lucide React icons
@@ -145,21 +93,18 @@ This is not a prototype—we're building toward a production-ready product with 
 
 ### Current Status
 
-**Phases 1-6: Core Features** ✅ **COMPLETE**
+**Phase 1-4: Core Features** ✅ **COMPLETE**
 - Fixed-layout AppShell (no layout shift)
-- Home page with premium recipe cards and AI generation
-- Complete scan flow with Gemini AI vision
-- OpenAI recipe generation with culinary guardrails
-- DALL-E-3 image generation for Chef's Pick
+- Home page with hero CTA and recipe carousel
+- Complete scan flow (camera, review, pantry integration)
 - Pantry management with status cycling
 - Grocery list with sharing
-- Dual credit system (free + monthly premium)
+- Credit system with modals
 - Zustand state management with persistence
 - Real-time waste saved tracking
-- Premium UX with animated gradients
-- Featured recipe layout
 
-**Next:** Stripe integration, user authentication, recipe history
+**Next:** Phase 5 (Profile, Settings & Preferences) and Phase 6 (AI Integration)
+**Note:** Home page locked (UI/UX frozen for polish)
 
 ---
 
@@ -220,7 +165,7 @@ clevercrave/
 │   ├── list/
 │   │   └── page.tsx            # Grocery list ✅
 │   └── profile/
-│       └── page.tsx            # User profile 📋
+│       └── page.tsx            # User profile ✅ (UI-only)
 │
 ├── components/
 │   ├── layout/                  # AppShell chrome
@@ -537,7 +482,7 @@ interface AppShellProps {
 
 **Features:**
 - Fixed 80px height
-- 4 navigation tabs: Home, Pantry, List, Profile
+- 4 navigation tabs: Home, Inventory, List, Profile
 - Active state via `usePathname()`
 - Uses Next.js `<Link>` for routing
 - Orange accent for active tab
@@ -545,7 +490,7 @@ interface AppShellProps {
 
 **Routes:**
 - `/` → Home
-- `/pantry` → Pantry
+- `/pantry` → Inventory
 - `/list` → Grocery List
 - `/profile` → Profile
 
@@ -580,11 +525,11 @@ interface AppShellProps {
 
 ---
 
-#### 6. HomeFilters
-**File:** `components/home/HomeFilters.tsx`  
+#### Deleted feature. #### 6. HomeFilters
+**Deleted File:** `components/home/HomeFilters.tsx`  
 **Export:** Default
 
-**Features:**
+**Deleted Features:**
 - Horizontal scrolling chip row
 - Dropdown: "Dinner ⌄"
 - Filter chips: 🥑 Keto, 💪 High Protein, 🍝 Comfort, 🥗 Healthy
@@ -598,45 +543,8 @@ interface AppShellProps {
 
 **Features:**
 - Section title: "Recommended for You"
-- Button: "🎲 Chef's Pick" (right-aligned)
-- Active scale animation on button
-
----
-
-#### 8. PremiumGradient
-**File:** `components/home/PremiumGradient.tsx`  
-**Export:** Default
-
-**Props:**
-```typescript
-interface PremiumGradientProps {
-  type: 'ready' | 'almost';
-  className?: string;
-}
-```
-
-**Features:**
-- Animated gradient backgrounds for recipe cards
-- Two types:
-  - `ready`: Green gradient (🥗) - All ingredients available
-  - `almost`: Orange/red gradient (🍜) - Almost ready
-- Large pulsing emoji icon overlay
-- 8-second gradient animation
-- Radial texture overlay
-- SSR-safe (checks mount state)
-- Used for Cards 1 & 2 (cost optimization vs DALL-E)
-
-**CSS Required:**
-```css
-@keyframes gradient {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient 8s ease infinite;
-}
-```
+- # Deleted Button: "🎲 Chef's Pick" (right-aligned)
+- # Deleted Active scale animation on button
 
 ---
 
@@ -676,10 +584,9 @@ interface RecipeCardProps {
 
 **Features:**
 - Full-screen translucent overlay with backdrop blur
-- Three floating buttons (lower right):
+- Two floating buttons (lower right):
   - 📸 Snap Groceries → routes to `/scan/camera`
-  - 🏷️ Barcode → alert (coming soon)
-  - ✏️ Manual → alert (coming soon)
+  - ✏️ Manual → routes to `/scan/manual`
 - Click outside to close
 
 ---
@@ -712,19 +619,13 @@ interface OutOfCreditsModalProps {
 
 ```typescript
 export interface Recipe {
-  id: string;                    // Unique timestamp-based ID (e.g., "1704123456789-0")
+  id: string;                    // Unique identifier
   title: string;                 // "Garlic Butter Shrimp Pasta"
-  image: string;                 // DALL-E URL (Card 3) or Unsplash URL (Cards 1 & 2)
+  image: string;                 // Unsplash URL
   totalTime: string;             // "15 min"
   tags: string[];                // ["Comfort", "Fast"]
   ingredientsUsed: string[];     // ["Pasta", "Garlic", "Butter"]
-  missingIngredients: string[];  // ["White Wine"] - Empty for Card 1
-  description: string;           // One-line description from GPT
-  steps: Array<{                 // Cooking instructions
-    instruction: string;
-    duration?: string;           // Optional time per step
-  }>;
-  generatedAt?: number;          // Timestamp of generation
+  missingIngredients: string[];  // ["White Wine"]
 }
 ```
 
@@ -743,10 +644,11 @@ See **State Management** section for `Ingredient` and `ListItem` interfaces.
 - [x] BottomNav with routing and badge counts
 - [x] HomeHeader with credits pill (real data)
 - [x] HeroGenerateCard CTA with credit system
-- [x] HomeFilters diet chips
+- [ ] HomeFilters diet chips (removed to reduce decision fatigue)
 - [x] RecommendedHeader with Chef's Pick
 - [x] RecipeCard carousel with list integration
-- [x] Mock recipe data (3 recipes)
+- [x] Empty state until inventory exists
+- [x] Home page locked (UI/UX frozen for polish)
 - [x] No TypeScript errors
 - [x] No layout shift
 - [x] Default exports aligned
@@ -759,45 +661,27 @@ See **State Management** section for `Ingredient` and `ListItem` interfaces.
 ### ✅ Phase 2: Scan Flow (COMPLETE)
 
 #### `/scan` Page - Entry Point
-- [x] Clean entry page with 2 options (Manual & Camera)
-- [x] Large card-based layout with icons and descriptions
-- [x] Manual Entry: ✏️ "Type in items one by one"
-- [x] Camera Scan: 📸 "AI-powered ingredient detection" (featured gradient)
-- [x] Quick tip callout about AI capabilities
-- [x] Fixed redirect loop (no longer redirects to home)
-
-#### ScanOverlay Component
-- [x] Full-screen backdrop blur overlay
+- [x] ScanOverlay component with backdrop blur
 - [x] Two floating buttons (lower right):
-  - [x] 📸 SNAP GROCERIES → routes to `/scan/camera`
-  - [x] ✏️ MANUAL → routes to `/scan/manual`
+  - [x] 📸 Snap Groceries → routes to `/scan/camera`
+  - [x] ✏️ Manual → routes to `/scan/manual`
 - [x] Click outside to close overlay
-- [x] FAB integration (opens overlay)
-- [x] Removed barcode button (non-functional)
+- [x] FAB integration (routes to `/scan`)
 
-#### `/scan/camera` Page - Camera Capture with AI
+#### `/scan/camera` Page - Camera Capture
 - [x] Full-screen camera interface
 - [x] Fixed header with back button
-- [x] Real camera integration (MediaDevices API)
+- [x] Live camera feed
 - [x] Capture button with loading state
-- [x] Credit cost indicator (5 credits)
-- [x] Credit deduction with refund on error
+- [x] Credit cost indicator
+- [x] Credit deduction (5 credits)
 - [x] OutOfCreditsModal integration
-- [x] Gemini Vision API integration
-- [x] Real-time AI ingredient detection
-- [x] Error handling with user-friendly messages
-- [x] Navigation to `/scan/review` with AI results
-
-#### `/scan/manual` Page - Manual Entry
-- [x] Simple text input interface
-- [x] Add items one by one
-- [x] Instant feedback
-- [x] No credit cost
+- [x] 2-second processing simulation
+- [x] Navigation to `/scan/review` with mock data
 
 #### `/scan/review` Page - Confirm Items
 - [x] Sticky header with "Confirm Items" title
-- [x] Simplified UI (removed name editing)
-- [x] Location selector (Fridge, Freezer, Pantry)
+- [x] Location toggle (Fridge, Freezer, Pantry)
 - [x] Delete button for each item
 - [x] Empty state with "Try Again" button
 - [x] Bottom action bar:
@@ -815,7 +699,7 @@ See **State Management** section for `Ingredient` and `ListItem` interfaces.
 ### ✅ Phase 3: Pantry Management (COMPLETE)
 
 #### `/pantry` Page
-- [x] Grid layout for pantry items (2 columns)
+- [x] List layout for pantry items
 - [x] Status indicators:
   - [x] Green dot: Fresh
   - [x] Yellow dot: Running low
@@ -825,8 +709,9 @@ See **State Management** section for `Ingredient` and `ListItem` interfaces.
 - [x] Long-press to delete (800ms)
 - [x] Delete confirmation modal
 - [x] Category filter chips (All, Fresh, Running Low, Out)
-- [x] Sort options (name, date, status)
-- [x] Food emoji helper function
+- [ ] Sort options (name, date, status) — not implemented
+- [ ] Food emoji helper function — not present in code
+- [x] Low/Out items show + button to add to grocery list
 - [x] Empty state: "Your pantry is empty"
 - [x] Filtered empty state
 - [x] Mobile touch feedback (`active:scale-95`)
@@ -851,6 +736,8 @@ See **State Management** section for `Ingredient` and `ListItem` interfaces.
 - [x] Custom checkbox component
 - [x] Sort items (unchecked first)
 - [x] Long-press to delete (same pattern as pantry)
+- [x] Dismissible instruction tip (tap to check off, hold to delete)
+- [x] Input length capped (40 chars)
 - [x] Delete confirmation modal
 - [x] "Clear Checked" button (conditional)
 - [x] "Share List" button (native Share API with clipboard fallback)
@@ -869,65 +756,46 @@ See **State Management** section for `Ingredient` and `ListItem` interfaces.
 
 ---
 
-### 📋 Phase 5: Profile & Settings (PLANNED)
+### 🚧 Phase 5: Profile & Settings (IN PROGRESS)
 
 #### `/profile` Page
+- [x] Section scaffolding (Account, Premium, Features, Support, About)
+- [x] Premium upsell card (UI-only)
 - [ ] User avatar (placeholder)
 - [ ] Credits display (large)
 - [ ] Household size picker
 - [ ] Dietary preferences (multi-select)
-  - [ ] Vegetarian, Vegan, Gluten-free, Dairy-free, Keto
+- [ ] Vegetarian, Vegan, Gluten-free, Dairy-free, Keto
 - [ ] Cuisine preferences
 - [ ] Difficulty level (Easy/Medium/Hard)
-- [ ] Premium upsell card
 - [ ] Sign out button (future)
 
 **Target Completion:** Month 2
 
 ---
 
-### ✅ Phase 6: AI Integration (COMPLETE)
+### 🤖 Phase 6: AI Integration (FUTURE)
 
 #### Gemini Vision API
-- [x] Camera capture → upload to Gemini
-- [x] Parse response → extract ingredients
-- [x] Map to ingredient categories
-- [x] Handle errors gracefully
-- [x] Credit refund on errors
+- [ ] Camera capture → upload to Gemini
+- [ ] Parse response → extract ingredients
+- [ ] Map to ingredient categories
+- [ ] Handle errors gracefully
 
 #### GPT-4o-mini Recipe Generation
-- [x] Build prompt with pantry items + culinary guardrails
-- [x] Request 3 recipes with quality standards
-- [x] Parse response → Recipe objects with unique IDs
-- [x] Validation logic (Recipe 1: 0 missing ingredients)
-- [x] Automatic retry with fallback recipes
-- [x] Forbidden combinations check (e.g., peanut butter + seafood)
-
-#### DALL-E-3 Image Generation
-- [x] Generate AI food photography for Card 3 (Chef's Pick)
-- [x] Professional prompt engineering (magazine quality, restaurant-style)
-- [x] Unsplash fallback for Cards 1 & 2 (cost optimization)
-- [x] Cost tracking: ~$0.04075 per generation
+- [ ] Build prompt with pantry items
+- [ ] Request 3 recipes (constraint: ultra-short)
+- [ ] Parse response → Recipe objects
+- [ ] Cache recipes for 24 hours
 
 #### Credits System
-- [x] Dual system: Free tier (25 scans) + Monthly premium (10 AI generations)
 - [x] Deduct credits per action (scan: 5, generate: 1)
-- [x] Monthly reset tracking with automatic rollover
-- [x] Display credit counter in header (pill badge)
+- [x] Display credit cost before actions
 - [x] "Out of credits" modal with premium pitch
-- [x] Different UI for free vs premium users
-- [x] Buy more credits option for premium users
 - [ ] Track usage analytics
 - [ ] Purchase credits flow (Stripe integration)
 
-#### Premium UX Features
-- [x] PremiumGradient component (animated backgrounds)
-- [x] Featured layout (Card 3 first & largest)
-- [x] Clean generate button (no badge, premium feel)
-- [x] Empty state with FAB directive
-- [x] Recipe cards with unique timestamp IDs
-
-**Completed:** January 2026
+**Target Completion:** Month 3+
 
 ---
 
@@ -1018,17 +886,6 @@ import { Scanner } from "@/prototype/Scanner"; // ❌ NO!
     transform: translateX(-50%) translateY(0);
   }
 }
-
-/* Premium gradient animation for recipe cards */
-@keyframes gradient {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient 8s ease infinite;
-}
 ```
 
 ---
@@ -1057,41 +914,29 @@ import { Scanner } from "@/prototype/Scanner"; // ❌ NO!
 
 ### 🔥 HIGH PRIORITY (Next 2 Weeks)
 
-1. **Premium Purchase Flow** — Stripe integration for credit purchases
-2. **User Authentication** — Supabase Auth for account management
-3. **Recipe History** — Save and view past generated recipes
-4. **Fix Credits Hydration Issue** — Resolve localStorage flicker (25 → 20)
+1. **Fix Credits Hydration Issue** — Resolve localStorage flicker (25 → 20)
+2. **Profile Page** — Basic user settings and preferences
+3. **Recipe Generation Mock** — Improve mock generation flow
 
 **Success Criteria:**
-- Users can purchase credits via Stripe
-- User accounts with authentication
-- Recipe history persisted and viewable
 - Credits display correctly on first load
+- User can access profile page
+- Generate flow feels complete (even with mock data)
 
 ---
 
-### ✅ COMPLETED
+### 📅 MEDIUM PRIORITY (Month 1)
 
-- ✅ **Real AI Integration** — Gemini Vision + GPT-4o-mini + DALL-E-3
-- ✅ **Profile Page** — Basic user settings and preferences
-- ✅ **Recipe Generation** — Real AI-powered recipe creation
-- ✅ **Manual Entry** — Full manual item entry flow
-- ✅ **Scan Flow** — Complete scan-to-pantry flow
-- ✅ **Dual Credit System** — Free + Monthly premium credits
-
----
-
-### 📅 MEDIUM PRIORITY (Month 1-2)
-
-5. **Recipe Sharing Enhancements** — Social media cards with images
-6. **Recipe Detail Improvements** — Enhanced cooking mode
-7. **Pantry Analytics** — Usage patterns and insights
-8. **Search & Filter** — Search recipes, pantry items
+4. **Real AI Integration** — Gemini Vision + GPT-4o-mini
+5. **Premium Purchase Flow** — Stripe integration
+6. **Recipe Sharing** — Social media integration
+7. **Barcode Scanner** — Implement barcode scanning
+8. **Manual Entry** — Full manual item entry flow
 
 **Success Criteria:**
-- Beautiful recipe cards for social sharing
-- Improved cooking experience
-- User insights and analytics
+- AI generates real recipes from photos
+- Users can purchase credits
+- Recipes can be shared to social media
 
 ---
 
@@ -1160,23 +1005,17 @@ import { Scanner } from "@/prototype/Scanner"; // ❌ NO!
 **Priority:** HIGH  
 **Fix Needed:** Migration logic in `userStore.ts` to detect and update old data, or clear localStorage for new users
 
-#### Recipe Generation Still Mock → ✅ RESOLVED
-**Was:** HeroGenerateCard showed alert instead of real recipes  
-**Fixed:** Full OpenAI integration with GPT-4o-mini + DALL-E-3  
-**Impact:** Core feature now complete  
-**Resolved:** January 8, 2026
+#### Recipe Generation Still Mock
+**Status:** HeroGenerateCard shows alert instead of real recipes  
+**Impact:** Core feature incomplete  
+**Priority:** MEDIUM (Phase 6)  
+**Timeline:** Month 3+
 
-#### Barcode/Manual Entry Not Implemented → ✅ RESOLVED
-**Was:** Placeholder alerts only  
-**Fixed:** Manual entry fully functional, barcode button removed (non-functional)  
-**Impact:** Scan options streamlined  
-**Resolved:** January 8, 2026
-
-#### Scan Page Redirect Loop → ✅ RESOLVED
-**Was:** `/scan` immediately redirected to home, breaking "Add Items" buttons  
-**Fixed:** Created proper scan entry page with Manual & Camera option cards  
-**Impact:** Navigation now works correctly  
-**Resolved:** January 8, 2026
+#### Barcode/Manual Entry Not Implemented
+**Status:** Placeholder alerts only  
+**Impact:** Limited scan options  
+**Priority:** MEDIUM  
+**Timeline:** Month 1
 
 ---
 
@@ -1328,6 +1167,6 @@ This guide is **actively maintained** and should be updated when:
 
 ---
 
-**Last Updated:** January 8, 2026  
+**Last Updated:** January 15, 2026  
 **Maintained By:** Development Team  
 **Version:** 0.3.0 (Phases 1-4 Complete)

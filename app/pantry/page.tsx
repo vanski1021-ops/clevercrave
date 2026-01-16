@@ -1,8 +1,10 @@
 "use client";
 
 import { usePantryStore, Ingredient } from "@/stores/pantryStore";
+import { useListStore } from "@/stores/listStore";
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import { Plus } from "lucide-react";
 
 type FilterType = "all" | "fresh" | "low" | "out";
 type SortType = "name" | "date" | "status";
@@ -11,28 +13,29 @@ export default function PantryPage() {
   const items = usePantryStore((state) => state.items);
   const updateStatus = usePantryStore((state) => state.updateStatus);
   const removeItem = usePantryStore((state) => state.removeItem);
+  const addItemToList = useListStore((state) => state.addItem);
 
   const [filter, setFilter] = useState<FilterType>("all");
   const [sortBy] = useState<SortType>("date");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [showTip, setShowTip] = useState(false);
+  const [showTip, setShowTip] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !localStorage.getItem("pantry-tip-dismissed");
+  });
 
   // Long press timer ref
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTriggeredRef = useRef(false);
 
-  // Check if tip was dismissed before
-  useEffect(() => {
-    const tipDismissed = localStorage.getItem("pantry-tip-dismissed");
-    if (!tipDismissed) {
-      setShowTip(true);
-    }
-  }, []);
-
   // Handle tip dismissal
   const handleDismissTip = () => {
     setShowTip(false);
     localStorage.setItem("pantry-tip-dismissed", "true");
+  };
+
+  const handleAddToList = (name: string) => {
+    addItemToList(name);
+    if ("vibrate" in navigator) navigator.vibrate(10);
   };
 
   // Calculate counts
@@ -148,7 +151,7 @@ export default function PantryPage() {
   return (
     <div className="min-h-screen bg-[#FFF7ED] p-6 pb-32 animate-in fade-in duration-300">
       {/* Header */}
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-2">My Inventory</h1>
+      <h1 className="text-3xl font-extrabold text-gray-900 mb-2">My Kitchen</h1>
       <p className="text-sm font-medium mb-4">
         <span className="text-green-600">{freshCount} fresh</span>
         <span className="text-gray-300 mx-2">•</span>
@@ -161,7 +164,7 @@ export default function PantryPage() {
       {showTip && items.length > 0 && (
         <div className="bg-white/80 backdrop-blur-sm border border-orange-100 rounded-2xl p-3 mb-4 flex items-center justify-between">
           <p className="text-sm text-gray-600">
-            💡 Tap to cycle status • Hold to delete
+            💡 Tap to cycle status • Hold to delete • + adds to list
           </p>
           <button
             onClick={handleDismissTip}
@@ -301,6 +304,19 @@ export default function PantryPage() {
                   {item.location}
                 </p>
               </div>
+
+              {(item.status === "low" || item.status === "out") && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToList(item.name);
+                  }}
+                  className="ml-auto w-9 h-9 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center active:scale-95 transition-transform"
+                  aria-label={`Add ${item.name} to grocery list`}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
             </div>
           ))}
         </div>

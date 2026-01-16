@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useListStore } from "@/stores/listStore";
-import { Home, Package, ClipboardList, Menu } from "lucide-react";
+import { Home, ClipboardList, Menu, CookingPot } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: Home },
-  { label: "Inventory", href: "/pantry", icon: Package },
+  { label: "Kitchen", href: "/pantry", icon: CookingPot },
   { label: "List", href: "/list", icon: ClipboardList },
   { label: "Profile", href: "/profile", icon: Menu },
 ];

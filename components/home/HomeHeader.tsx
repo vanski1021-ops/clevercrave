@@ -3,6 +3,7 @@
 import { useMemo, useEffect } from "react";
 import { useUserStore } from "@/stores/userStore";
 import { usePantryStore } from "@/stores/pantryStore";
+import { getMealContext } from "@/lib/mealTime";
 
 export default function HomeHeader() {
   const credits = useUserStore((state) => state.credits);
@@ -24,7 +25,7 @@ export default function HomeHeader() {
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
-            Tonight&apos;s Vibe
+            {getMealContext().heading}
           </h1>
           <p className="mt-2 text-gray-600 font-medium">
             Using {pantryCount} items from your pantry.

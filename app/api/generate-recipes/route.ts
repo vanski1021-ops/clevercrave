@@ -1,41 +1,33 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { generateRecipes } from '@/lib/openai'
+import { NextResponse } from "next/server";
+import { generateRecipes } from "@/lib/openai";
 
-export async function POST(request: NextRequest) {
-  // Validate API key exists
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json(
-      { error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' },
-      { status: 500 }
-    )
-  }
+interface GenerateRecipesRequest {
+  pantryItems?: string[];
+  mealType?: string;
+  dietaryPreferences?: string[];
+}
 
+export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { pantryItems, mealType, dietaryPreferences } = body
-    
-    // Validate input
-    if (!pantryItems || !Array.isArray(pantryItems) || pantryItems.length === 0) {
+    const body = (await request.json()) as GenerateRecipesRequest;
+    const pantryItems = body.pantryItems ?? [];
+    const mealType = body.mealType ?? "Dinner";
+    const dietaryPreferences = body.dietaryPreferences ?? [];
+
+    if (!Array.isArray(pantryItems) || pantryItems.length === 0) {
       return NextResponse.json(
-        { error: 'No pantry items provided' },
+        { error: "pantryItems must be a non-empty array" },
         { status: 400 }
-      )
+      );
     }
-    
-    // Call OpenAI
-    const recipes = await generateRecipes(
-      pantryItems,
-      mealType || 'Dinner',
-      dietaryPreferences || []
-    )
-    
-    return NextResponse.json({ recipes })
-    
-  } catch (error: any) {
-    console.error('Recipe generation API error:', error)
+
+    const recipes = await generateRecipes(pantryItems, mealType, dietaryPreferences);
+    return NextResponse.json({ recipes });
+  } catch (error) {
+    console.error("Recipe generation failed:", error);
     return NextResponse.json(
-      { error: error.message || 'Failed to generate recipes' },
+      { error: "Failed to generate recipes" },
       { status: 500 }
-    )
+    );
   }
 }

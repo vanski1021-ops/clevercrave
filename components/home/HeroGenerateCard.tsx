@@ -5,13 +5,13 @@ import { useState, useMemo } from 'react'
 import { useUserStore, CREDIT_COSTS } from '@/stores/userStore'
 import { usePantryStore } from '@/stores/pantryStore'
 import OutOfCreditsModal from '@/components/OutOfCreditsModal'
+import { getMealContext } from '@/lib/mealTime'
 
 export default function HeroGenerateCard() {
   const router = useRouter()
   const [isGenerating, setIsGenerating] = useState(false)
   const [showCreditsModal, setShowCreditsModal] = useState(false)
   
-  const credits = useUserStore(state => state.credits)
   const deductCredits = useUserStore(state => state.deductCredits)
   const addCredits = useUserStore(state => state.addCredits)
   const incrementGenerated = useUserStore(state => state.incrementGenerated)
@@ -42,6 +42,7 @@ export default function HeroGenerateCard() {
     try {
       // Get pantry item names
       const itemNames = pantryItems.map(item => item.name)
+      const mealContext = getMealContext()
       
       // Call API route
       const response = await fetch('/api/generate-recipes', {
@@ -51,7 +52,7 @@ export default function HeroGenerateCard() {
         },
         body: JSON.stringify({
           pantryItems: itemNames,
-          mealType: 'Dinner',
+          mealType: mealContext.mealType,
           dietaryPreferences: []
         })
       })
@@ -103,7 +104,7 @@ export default function HeroGenerateCard() {
             <div className="flex items-center gap-3">
               <span className="text-3xl">✨</span>
               <span className="text-2xl font-black">
-                {isGenerating ? 'Generating...' : 'Generate Dinner Ideas'}
+                {isGenerating ? 'Generating...' : getMealContext().cta}
               </span>
             </div>
             <p className="text-white/80 text-sm font-medium">

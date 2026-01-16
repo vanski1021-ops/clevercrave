@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { ChevronRight } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "next/navigation";
@@ -9,12 +9,17 @@ import { Recipe } from "@/types";
 export default function ProfilePage() {
   const router = useRouter();
   const favoriteRecipes = useUserStore((state) => state.favoriteRecipes);
-  const [favoriteRecipesData, setFavoriteRecipesData] = useState<Recipe[]>([]);
+  const favoriteRecipesData = useMemo(() => {
+    if (typeof window === "undefined") return [];
+    let recipes: Recipe[] = [];
+    try {
+      recipes = JSON.parse(localStorage.getItem("generatedRecipes") || "[]");
+    } catch (error) {
+      console.warn("Failed to parse stored recipes:", error);
+      return [];
+    }
 
-  useEffect(() => {
-    // Load favorite recipes from localStorage
-    const recipes = JSON.parse(localStorage.getItem("generatedRecipes") || "[]");
-    const favorites = favoriteRecipes
+    return favoriteRecipes
       .map((id) => {
         // Try to find by ID first
         let found = recipes.find((r: Recipe) => r.id === id);
@@ -28,7 +33,6 @@ export default function ProfilePage() {
         return found;
       })
       .filter((r): r is Recipe => r !== undefined);
-    setFavoriteRecipesData(favorites);
   }, [favoriteRecipes]);
 
   return (

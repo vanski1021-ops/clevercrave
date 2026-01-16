@@ -12,14 +12,8 @@ interface OutOfCreditsModalProps {
 export default function OutOfCreditsModal({ isOpen, onClose }: OutOfCreditsModalProps) {
   const credits = useUserStore(state => state.credits)
   const monthlyGenerations = useUserStore(state => state.monthlyGenerations)
-  const lastResetDate = useUserStore(state => state.lastResetDate)
-  
+
   if (!isOpen) return null
-  
-  // Calculate days until reset
-  const lastReset = new Date(lastResetDate)
-  const nextReset = new Date(lastReset.getFullYear(), lastReset.getMonth() + 1, 1)
-  const daysUntilReset = Math.ceil((nextReset.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   
   const isFreeUser = credits === 0 && monthlyGenerations === 0
   
@@ -103,8 +97,8 @@ export default function OutOfCreditsModal({ isOpen, onClose }: OutOfCreditsModal
             </div>
             
             <div className="text-center text-sm text-gray-500 mb-4">
-              Or wait until next month!<br/>
-              Credits reset in <span className="font-bold text-orange-600">{daysUntilReset} days</span>
+              Or wait until next month!<br />
+              Credits reset on the 1st of each month.
             </div>
             
             <button 

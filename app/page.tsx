@@ -8,109 +8,79 @@ import RecommendedHeader from "@/components/home/RecommendedHeader";
 import RecipeCard from "@/components/RecipeCard";
 import { Recipe } from "@/types";
 
-/* ---------------- Mock Data (Temporary) ---------------- */
-
-const MOCK_RECIPES: Recipe[] = [
-  {
-    id: "1",
-    title: "Garlic Butter Shrimp Pasta",
-    image:
-      "https://images.unsplash.com/photo-1603133872878-684f208fb84b?q=80&w=1200",
-    totalTime: "15 min",
-    tags: ["Comfort"],
-    ingredientsUsed: ["Pasta", "Garlic", "Butter", "Shrimp"],
-    missingIngredients: ["White Wine"],
-  },
-  {
-    id: "2",
-    title: "Teriyaki Chicken Bowl",
-    image:
-      "https://images.unsplash.com/photo-1604908177522-4326e1b9b89e?q=80&w=1200",
-    totalTime: "20 min",
-    tags: ["Healthy"],
-    ingredientsUsed: ["Chicken", "Rice", "Broccoli"],
-    missingIngredients: ["Sesame Seeds"],
-  },
-  {
-    id: "3",
-    title: "Caprese Grilled Cheese",
-    image:
-      "https://images.unsplash.com/photo-1604908177225-5f9f1c7d2c43?q=80&w=1200",
-    totalTime: "10 min",
-    tags: ["Fast"],
-    ingredientsUsed: ["Bread", "Mozzarella", "Tomato"],
-    missingIngredients: [],
-  },
-];
-
 /* ---------------- Page ---------------- */
 
 export default function HomePage() {
   const router = useRouter();
-  // State for dynamic recipes (no fallback - check for actual generated recipes)
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [hasGeneratedRecipes, setHasGeneratedRecipes] = useState(false);
+  const thinkingCopy = [
+    "Looking at what’s in your kitchen…",
+    "Finding combinations that make sense…",
+    "Balancing quick and satisfying options…",
+  ];
+  const loadStoredRecipes = () => {
+    if (typeof window === "undefined") return [];
+    const stored = localStorage.getItem("generatedRecipes");
+    if (!stored) return [];
+    try {
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error("Failed to load recipes:", error);
+      return [];
+    }
+  };
+
+  const [recipes, setRecipes] = useState<Recipe[]>(loadStoredRecipes);
   const [isLoading, setIsLoading] = useState(false);
   const [showCompletionToast, setShowCompletionToast] = useState(false);
+  const [thinkingIndex, setThinkingIndex] = useState(0);
+  const hasGeneratedRecipes = recipes.length > 0;
 
   useEffect(() => {
-    // Load generated recipes from localStorage
-    const loadRecipes = () => {
-      const stored = localStorage.getItem('generatedRecipes');
-      if (stored) {
-        try {
-          const generated = JSON.parse(stored);
-          if (generated.length > 0) {
-            setRecipes(generated);
-            setHasGeneratedRecipes(true);
-          } else {
-            setRecipes([]);
-            setHasGeneratedRecipes(false);
-          }
-        } catch (err) {
-          console.error('Failed to load recipes:', err);
-          setRecipes([]);
-          setHasGeneratedRecipes(false);
-        }
-      } else {
-        setRecipes([]);
-        setHasGeneratedRecipes(false);
-      }
-    };
-    
-    // Load on mount
-    loadRecipes();
-    
     // Listen for new generations
     const handleNewRecipes = () => {
-      loadRecipes();
+      setRecipes(loadStoredRecipes());
     };
-    
+
+    const handleCompletionToast = () => {
+      setShowCompletionToast(true);
+      window.setTimeout(() => {
+        setShowCompletionToast(false);
+      }, 3000);
+    };
+
     // Listen for loading state
     const handleLoadingStart = () => setIsLoading(true);
     const handleLoadingEnd = () => setIsLoading(false);
-    
-    window.addEventListener('recipesGenerated', handleNewRecipes);
-    window.addEventListener('recipesGenerating', handleLoadingStart);
-    window.addEventListener('recipesGeneratedComplete', handleLoadingEnd);
-    
+
+    window.addEventListener("recipesGenerated", handleNewRecipes);
+    window.addEventListener("recipesGenerating", handleLoadingStart);
+    window.addEventListener("recipesGeneratedComplete", handleLoadingEnd);
+    window.addEventListener("recipeCompleted", handleCompletionToast);
+
     return () => {
-      window.removeEventListener('recipesGenerated', handleNewRecipes);
-      window.removeEventListener('recipesGenerating', handleLoadingStart);
-      window.removeEventListener('recipesGeneratedComplete', handleLoadingEnd);
+      window.removeEventListener("recipesGenerated", handleNewRecipes);
+      window.removeEventListener("recipesGenerating", handleLoadingStart);
+      window.removeEventListener("recipesGeneratedComplete", handleLoadingEnd);
+      window.removeEventListener("recipeCompleted", handleCompletionToast);
     };
   }, []);
 
+  useEffect(() => {
+    if (!isLoading) return;
+    setThinkingIndex(0);
+    const id = window.setInterval(() => {
+      setThinkingIndex((prev) => (prev + 1) % thinkingCopy.length);
+    }, 1800);
+    return () => window.clearInterval(id);
+  }, [isLoading, thinkingCopy.length]);
+
   // Check for completed recipe and show toast
   useEffect(() => {
-    const completed = localStorage.getItem('justCompletedRecipe');
+    const completed = localStorage.getItem("justCompletedRecipe");
     if (completed) {
-      setShowCompletionToast(true);
-      localStorage.removeItem('justCompletedRecipe');
-      // Auto-hide toast after 3 seconds
-      setTimeout(() => {
-        setShowCompletionToast(false);
-      }, 3000);
+      localStorage.removeItem("justCompletedRecipe");
+      window.dispatchEvent(new Event("recipeCompleted"));
     }
   }, []);
 
@@ -127,8 +97,8 @@ export default function HomePage() {
           text: `Check out this ${recipe.title} recipe!`,
           url: `${window.location.origin}/recipes/${recipe.id}`
         });
-      } catch (err) {
-        console.log("Share cancelled");
+      } catch (error) {
+        console.log("Share cancelled", error);
       }
     } else {
       alert('Sharing not supported on this device');
@@ -199,12 +169,16 @@ export default function HomePage() {
         ) : isLoading ? (
           // Skeleton loading states
           <>
+            <div className="text-center text-sm font-semibold text-gray-600">
+              {thinkingCopy[thinkingIndex]}
+            </div>
+
             {/* Featured skeleton */}
             <div>
               <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                 <span>✨ Featured</span>
               </h3>
-              <div className="w-full h-[500px] bg-gray-100 animate-pulse rounded-3xl" />
+              <LoadingRecipeCard variant="chef" />
             </div>
             
             {/* Grid skeletons */}
@@ -213,8 +187,8 @@ export default function HomePage() {
                 More Options
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                <div className="h-[380px] bg-gray-100 animate-pulse rounded-3xl" />
-                <div className="h-[380px] bg-gray-100 animate-pulse rounded-3xl" />
+                <LoadingRecipeCard variant="ready" />
+                <LoadingRecipeCard variant="almost" />
               </div>
             </div>
           </>
@@ -276,6 +250,47 @@ export default function HomePage() {
             )}
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function LoadingRecipeCard({ variant }: { variant: "ready" | "almost" | "chef" }) {
+  const isChef = variant === "chef";
+  return (
+    <div
+      className={`relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-orange-900/10 ${
+        isChef ? "h-[500px]" : "h-[380px]"
+      } shimmer`}
+    >
+      <div
+        className={`absolute inset-0 ${
+          isChef
+            ? "bg-gradient-to-br from-orange-500 via-red-500 to-red-700"
+            : "bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200"
+        }`}
+      />
+      <div className="absolute inset-0 bg-white/10" />
+
+      {/* Badge */}
+      <div className="absolute top-4 left-4">
+        {isChef ? (
+          <span className="chef-glow inline-flex items-center gap-2 bg-white/20 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
+            <span className="chef-hat">👨‍🍳</span>
+            Chef&apos;s Pick
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-2 bg-white/40 text-gray-700 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
+            Warming up
+          </span>
+        )}
+      </div>
+
+      {/* Content placeholders */}
+      <div className="absolute bottom-6 left-6 right-6 space-y-3">
+        <div className="h-6 w-3/4 rounded bg-white/50" />
+        <div className="h-4 w-1/2 rounded bg-white/40" />
+        <div className="h-10 w-full rounded-2xl bg-white/30" />
       </div>
     </div>
   );

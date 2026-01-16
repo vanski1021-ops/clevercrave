@@ -18,6 +18,34 @@ export interface Recipe {
   generatedAt?: number
 }
 
+interface ParsedRecipeStep {
+  instruction?: string
+  duration?: string
+}
+
+interface ParsedRecipe {
+  title?: string
+  description?: string
+  tags?: string[]
+  totalTime?: string
+  ingredientsUsed?: string[]
+  missingIngredients?: string[]
+  steps?: ParsedRecipeStep[]
+}
+
+const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Late-night"] as const
+type MealType = (typeof MEAL_TYPES)[number]
+
+function coerceMealType(input?: string): MealType {
+  return MEAL_TYPES.includes(input as MealType) ? (input as MealType) : "Dinner"
+}
+
+function correctIngredientSpelling(value: string): string {
+  return value
+    .replace(/mozarella/gi, "mozzarella")
+    .replace(/mozzarela/gi, "mozzarella")
+}
+
 // Helper function to get image keyword from recipe title
 function getImageKeyword(title: string): string {
   const keywords = title.toLowerCase();
@@ -62,13 +90,15 @@ export async function generateRecipes(
 ): Promise<Recipe[]> {
   
   try {
+    const meal = coerceMealType(mealType)
+    const pantryItemsCorrected = pantryItems.map(correctIngredientSpelling)
     const dietaryRules = dietaryPreferences.length > 0 
       ? `\nDIETARY: ${dietaryPreferences.join(', ')}` 
       : ''
     
-    const prompt = `You are a creative chef AI. Generate EXACTLY 3 different ${mealType.toLowerCase()} recipes using these ingredients:
+    const prompt = `You are a creative chef AI. Generate EXACTLY 3 different ${meal.toLowerCase()} recipes using these ingredients:
 
-AVAILABLE: ${pantryItems.join(', ')}${dietaryRules}
+AVAILABLE: ${pantryItemsCorrected.join(', ')}${dietaryRules}
 
 CULINARY RULES - NEVER VIOLATE:
 
@@ -85,8 +115,8 @@ CULINARY RULES - NEVER VIOLATE:
    - Dairy with strongly acidic ingredients
 
 3. When suggesting recipes with limited ingredients:
-   - You CAN add 2-5 missing ingredients if it makes a GREAT recipe
-   - Prioritize common, affordable additions
+   - Recipe 1 & 2 MUST have 0 missing ingredients
+   - Chef's Pick may add 0-2 missing ingredients ONLY if needed for culinary sense
    - Missing ingredients should be pantry staples or easy to find
    - The recipe should be worth shopping for those items
 
@@ -105,14 +135,15 @@ Recipe 1 - READY TO COOK:
 - If exact match is impossible, make a very simple dish with what's available
 
 Recipe 2 - ALMOST THERE:
-- Can have 1-2 missing ingredients (common items like herbs, wine, cream)
-- Should elevate the meal significantly
-- Missing items must be affordable and widely available
+- Use ONLY available ingredients (0 missing)
+- Should elevate the meal slightly while staying easy
 
 Recipe 3 - CHEF'S PICK:
-- Can have 2-5 missing ingredients
-- Should be impressive and restaurant-quality
-- Missing ingredients must be worth buying
+- Should use as MANY available ingredients as possible
+- Missing ingredients ONLY if required for culinary sense
+- Cap missing ingredients at 0-2
+- Should be impressive, restaurant-quality, and appetizing (not basic)
+- Missing ingredients must be worth buying and easy to find
 - Still doable at home with available equipment
 
 OTHER RULES:
@@ -139,7 +170,7 @@ FORMAT (return ONLY this JSON, no other text):
 
 Ensure Recipe 1 has missingIngredients: [] (empty array).`;
 
-    // Retry loop for Recipe 1 validation
+    // Retry loop for Recipe validation
     let attempts = 0;
     const maxAttempts = 2;
     
@@ -167,9 +198,11 @@ Ensure Recipe 1 has missingIngredients: [] (empty array).`;
       const responseText = completion.choices[0].message.content || '{}'
       
       // Parse response
-      let recipesData
+      let recipesData: ParsedRecipe[] = []
       try {
-        const parsed = JSON.parse(responseText)
+        const parsed = JSON.parse(responseText) as
+          | { recipes?: ParsedRecipe[] }
+          | ParsedRecipe[]
         recipesData = Array.isArray(parsed) ? parsed : parsed.recipes || []
       } catch {
         recipesData = []
@@ -179,8 +212,14 @@ Ensure Recipe 1 has missingIngredients: [] (empty array).`;
       const timestamp = Date.now();
       
       // Transform to our Recipe format with unique IDs
-      const recipes: Recipe[] = recipesData.map((r: any, index: number) => {
+      const recipes: Recipe[] = recipesData.map((r, index: number) => {
         const title = r.title || 'Delicious Recipe';
+        const steps = Array.isArray(r.steps)
+          ? r.steps.map((step) => ({
+              instruction: step.instruction || "Step",
+              duration: step.duration
+            }))
+          : [];
         return {
           id: `${timestamp}-${index}`, // Unique ID like "1704123456789-0"
           title,
@@ -189,7 +228,7 @@ Ensure Recipe 1 has missingIngredients: [] (empty array).`;
           totalTime: r.totalTime || '20 min',
           ingredientsUsed: r.ingredientsUsed || [],
           missingIngredients: r.missingIngredients || [],
-          steps: r.steps || [],
+          steps,
           image: `https://source.unsplash.com/800x1200/?${getImageKeyword(title)}`,
           generatedAt: timestamp
         };
@@ -224,10 +263,14 @@ Ensure Recipe 1 has missingIngredients: [] (empty array).`;
         continue; // Retry the generation loop
       }
 
-      // Validation 2: Check if Recipe 1 has missing ingredients
-      if (recipes.length > 0) {
+      // Validation 2: Enforce card constraints
+      if (recipes.length >= 3) {
         const recipe1 = recipes[0];
+        const recipe2 = recipes[1];
+        const chefPick = recipes[2];
         const missingCount = recipe1.missingIngredients.length;
+        const recipe2MissingCount = recipe2.missingIngredients.length;
+        const chefMissingCount = chefPick.missingIngredients.length;
         
         console.log('Recipe 1 validation:', {
           title: recipe1.title,
@@ -235,7 +278,13 @@ Ensure Recipe 1 has missingIngredients: [] (empty array).`;
           missing: missingCount
         });
 
-        if (missingCount === 0) {
+        const pantryCount = pantryItemsCorrected.length;
+        const chefUsedCount = chefPick.ingredientsUsed.length;
+        const chefUsesPantryWell =
+          pantryCount < 4 ||
+          (chefUsedCount >= Math.min(4, pantryCount) && chefMissingCount <= 2);
+
+        if (missingCount === 0 && recipe2MissingCount === 0 && chefMissingCount <= 2 && chefUsesPantryWell) {
           // Generate DALL-E image ONLY for recipe 3 (Chef's Pick)
           if (recipes.length >= 3 && recipes[2]) {
             console.log('Generating DALL-E image for Chef\'s Pick...');
@@ -255,7 +304,9 @@ Ensure Recipe 1 has missingIngredients: [] (empty array).`;
           return recipes; // Success!
         }
         
-        console.warn(`Recipe 1 failed validation (has ${missingCount} missing items). Retrying...`);
+        console.warn(
+          `Validation failed (recipe1 missing: ${missingCount}, recipe2 missing: ${recipe2MissingCount}, chef missing: ${chefMissingCount}). Retrying...`
+        );
       } else {
         console.warn('No recipes generated. Retrying...');
       }
@@ -263,29 +314,33 @@ Ensure Recipe 1 has missingIngredients: [] (empty array).`;
 
     // Fallback if all attempts fail
     console.warn('All generation attempts failed validation. Generating fallback recipe.');
-    return generateFallbackRecipes(pantryItems);
+    return generateFallbackRecipes(pantryItemsCorrected);
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('OpenAI API Error:', error)
+    const err = error as { code?: string; status?: number; message?: string }
+    const errorCode = typeof err.code === "string" ? err.code : undefined
+    const errorStatus = typeof err.status === "number" ? err.status : undefined
+    const errorMessage = typeof err.message === "string" ? err.message : ""
     
     // Detailed error messages based on error type
-    if (error?.code === 'insufficient_quota') {
+    if (errorCode === 'insufficient_quota') {
       throw new Error('OpenAI API quota exceeded. Please add credits to your OpenAI account.')
     }
     
-    if (error?.code === 'invalid_api_key') {
+    if (errorCode === 'invalid_api_key') {
       throw new Error('Invalid OpenAI API key. Please check your configuration.')
     }
     
-    if (error?.status === 429 || error?.code === 'rate_limit_exceeded') {
+    if (errorStatus === 429 || errorCode === 'rate_limit_exceeded') {
       throw new Error('Too many requests. Please try again in a moment.')
     }
     
-    if (error?.code === 'model_not_found') {
+    if (errorCode === 'model_not_found') {
       throw new Error('AI model not available. Please contact support.')
     }
     
-    if (error?.message && error.message.includes('network')) {
+    if (errorMessage.includes('network')) {
       throw new Error('Network error. Please check your internet connection.')
     }
     

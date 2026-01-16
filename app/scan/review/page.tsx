@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePantryStore } from "@/stores/pantryStore";
@@ -13,70 +13,39 @@ interface ScannedItem {
   location: "Fridge" | "Freezer" | "Pantry";
 }
 
-const LOCATIONS: ("Fridge" | "Freezer" | "Pantry")[] = ["Fridge", "Freezer", "Pantry"];
+type DetectedItem = string | { name?: string; category?: string };
 
 export default function ReviewPage() {
   const router = useRouter();
   const addItems = usePantryStore((state) => state.addItems);
   const incrementWasteSaved = useUserStore((state) => state.incrementWasteSaved);
-  const [items, setItems] = useState<ScannedItem[]>([]);
+  const [items, setItems] = useState<ScannedItem[]>(() => {
+    if (typeof window === "undefined") return [];
+    const stored = localStorage.getItem("detectedItems");
+    if (!stored) return [];
+    try {
+      const detectedData: DetectedItem[] = JSON.parse(stored);
+      return detectedData.map((item, idx) => ({
+        id: `item-${Date.now()}-${idx}`,
+        name: typeof item === "string" ? item : item.name || "Unknown",
+        category: typeof item === "string" ? "Other" : item.category || "Other",
+        location: "Fridge",
+      }));
+    } catch (error) {
+      console.warn("Failed to parse detected items:", error);
+      return [];
+    }
+  });
   const [showToast, setShowToast] = useState(false);
   const [itemCount, setItemCount] = useState(0);
-  // Touch handlers for long-press delete
-  const [touchTimer, setTouchTimer] = useState<NodeJS.Timeout | null>(null);
-  const [touchTargetId, setTouchTargetId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('detectedItems')
-    if (stored) {
-      const detectedData = JSON.parse(stored)
-      
-      // Handle data from Gemini AI (has category)
-      const itemsWithMeta = detectedData.map((item: any, idx: number) => ({
-        id: `item-${Date.now()}-${idx}`,
-        name: item.name || item,
-        category: item.category || 'Other',
-        location: 'Fridge' as const
-      }))
-      
-      setItems(itemsWithMeta)
-    }
-  }, []);
-
-  // Cleanup touch timer on unmount
-  useEffect(() => {
-    return () => {
-      if (touchTimer) {
-        clearTimeout(touchTimer);
-      }
-    };
-  }, [touchTimer]);
-
   const updateLocation = (id: string, location: "Fridge" | "Freezer" | "Pantry") => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, location } : item
-    ));
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, location } : item))
+    );
   };
 
   const handleDelete = (id: string) => {
     setItems(items.filter(item => item.id !== id));
-  };
-
-  const handleTouchStart = (id: string) => {
-    const timer = setTimeout(() => {
-      handleDelete(id);
-      if ('vibrate' in navigator) navigator.vibrate(50);
-    }, 500); // 500ms long press
-    setTouchTimer(timer);
-    setTouchTargetId(id);
-  };
-
-  const handleTouchEnd = () => {
-    if (touchTimer) {
-      clearTimeout(touchTimer);
-      setTouchTimer(null);
-    }
-    setTouchTargetId(null);
   };
 
   const handleAddToPantry = () => {
@@ -177,9 +146,6 @@ export default function ReviewPage() {
 
               {/* Delete button */}
               <button
-                onTouchStart={() => handleTouchStart(item.id)}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchEnd}
                 onClick={() => handleDelete(item.id)}
                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50 flex-shrink-0"
               >
@@ -191,10 +157,10 @@ export default function ReviewPage() {
 
             {/* Location toggles */}
             <div className="flex gap-2">
-              {['Fridge', 'Freezer', 'Pantry'].map((loc) => (
+              {(["Fridge", "Freezer", "Pantry"] as ScannedItem["location"][]).map((loc) => (
                 <button
                   key={loc}
-                  onClick={() => updateLocation(item.id, loc as any)}
+                  onClick={() => updateLocation(item.id, loc)}
                   className={`flex-1 text-xs font-bold py-2 rounded-full transition-all ${
                     item.location === loc
                       ? 'bg-orange-500 text-white'

@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Clock, X } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { ChevronLeft, ChevronRight, CheckCircle, Clock, X } from "lucide-react";
 import { Recipe } from "@/types";
 
 export default function CookingModePage() {
@@ -10,34 +10,29 @@ export default function CookingModePage() {
   const router = useRouter();
   const recipeId = params.id as string;
 
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const recipe = useMemo<Recipe | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const recipes: Recipe[] = JSON.parse(
+        localStorage.getItem("generatedRecipes") || "[]"
+      );
+      return recipes.find((r) => r.id === recipeId) ?? null;
+    } catch (error) {
+      console.warn("Failed to load recipe:", error);
+      return null;
+    }
+  }, [recipeId]);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [showCompletion, setShowCompletion] = useState(false);
 
-  useEffect(() => {
-    // Load recipes from localStorage and find by unique ID
-    const recipes = JSON.parse(localStorage.getItem("generatedRecipes") || "[]");
-    
-    // Find recipe by unique ID
-    const found = recipes.find((r: Recipe) => r.id === recipeId);
-
-    if (found) {
-      setRecipe(found);
-    } else {
-      router.push("/");
-    }
-  }, [recipeId, router]);
-
   const totalSteps = recipe?.steps?.length || 0;
   const currentStepData = recipe?.steps?.[currentStep];
-  const allStepsComplete = completedSteps.length === totalSteps && totalSteps > 0;
-
   useEffect(() => {
-    if (allStepsComplete && !showCompletion) {
-      setShowCompletion(true);
+    if (!recipe) {
+      router.push("/");
     }
-  }, [allStepsComplete, showCompletion]);
+  }, [recipe, router]);
 
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
@@ -54,11 +49,17 @@ export default function CookingModePage() {
   };
 
   const handleComplete = () => {
-    setCompletedSteps((prev) =>
-      prev.includes(currentStep)
+    setCompletedSteps((prev) => {
+      const next = prev.includes(currentStep)
         ? prev.filter((s) => s !== currentStep)
-        : [...prev, currentStep]
-    );
+        : [...prev, currentStep];
+
+      if (next.length === totalSteps && totalSteps > 0) {
+        setShowCompletion(true);
+      }
+
+      return next;
+    });
     if ("vibrate" in navigator) navigator.vibrate(10);
   };
 
@@ -86,7 +87,7 @@ export default function CookingModePage() {
             Recipe Complete!
           </h1>
           <p className="text-gray-600 mb-6">
-            Great job! You've finished cooking {recipe.title}
+            Great job! You&apos;ve finished cooking {recipe.title}
           </p>
           
           <button

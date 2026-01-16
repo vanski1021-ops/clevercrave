@@ -1,28 +1,38 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useUserStore, CREDIT_COSTS } from '@/stores/userStore'
 // ✅ IMPORT THE SERVER ACTION
-import { detectIngredientsAction } from '@/app/actions/detectIngredients' 
+import { detectIngredientsAction } from '../../actions/detectIngredients' 
 import OutOfCreditsModal from '@/components/OutOfCreditsModal'
 
 export default function CameraPage() {
   const router = useRouter()
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [stream, setStream] = useState<MediaStream | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showCreditsModal, setShowCreditsModal] = useState(false)
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   
   const credits = useUserStore(state => state.credits)
   const deductCredits = useUserStore(state => state.deductCredits)
   const incrementScanned = useUserStore(state => state.incrementScanned)
 
   // Initialize camera on mount
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    streamRef.current = null;
+  }, []);
+
   useEffect(() => {
     let isMounted = true; // Track if component is still active
 
@@ -42,7 +52,7 @@ export default function CameraPage() {
           return;
         }
         
-        setStream(mediaStream);
+        streamRef.current = mediaStream;
         
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
@@ -72,18 +82,7 @@ export default function CameraPage() {
       isMounted = false;
       stopCamera(); // Make sure your stopCamera uses the current stream state or refs
     };
-  }, []); // Empty dependency array
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
-    // Clear the video source to allow new loads
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setStream(null);
-  }
+  }, [stopCamera]);
 
   const startCamera = async () => {
     try {
@@ -95,7 +94,7 @@ export default function CameraPage() {
         }
       });
       
-      setStream(mediaStream);
+      streamRef.current = mediaStream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;

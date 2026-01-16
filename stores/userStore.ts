@@ -75,8 +75,7 @@ export const useUserStore = create<UserStore>()(
         // For free tier, use regular credits
         if (state.credits > 0 && state.credits >= amount) {
           set({ 
-            credits: state.credits - amount,
-            totalScanned: state.totalScanned + 1
+            credits: state.credits - amount
           })
           return true
         }
